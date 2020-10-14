@@ -1,4 +1,4 @@
-package com.malsolo.kafkassandra;
+package com.malsolo.kafkassandra.kafka.basic;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -13,7 +13,6 @@ public class AppTest {
      */
     @Test
     public void shouldAnswerWithTrue() {
-
         assertTrue( true );
     }
 }

@@ -1,4 +1,4 @@
-package com.malsolo.kafkassandra;
+package com.malsolo.kafkassandra.kafka.basic;
 
 import java.util.stream.IntStream;
 
