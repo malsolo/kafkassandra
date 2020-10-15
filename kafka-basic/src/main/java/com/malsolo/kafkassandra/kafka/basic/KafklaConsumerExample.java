@@ -11,9 +11,9 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ConsumerExample {
+public class KafklaConsumerExample {
 
-    private static final Logger logger = LoggerFactory.getLogger(ConsumerExample.class);
+    private static final Logger logger = LoggerFactory.getLogger(KafklaConsumerExample.class);
     public static final String GROUP_ID_CONFIG_VALUE = "demo-consumer-1";
     public static final String AUTO_OFFSET_RESET_CONFIG_VALUE = "earliest";
 

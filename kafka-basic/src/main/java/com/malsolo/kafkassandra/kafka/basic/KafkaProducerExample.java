@@ -10,11 +10,11 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ProducerExample {
+public class KafkaProducerExample {
 
     public static final String ACKS_CONFIG_VALUE = "all";
 
-    private static final Logger logger = LoggerFactory.getLogger(ProducerExample.class);
+    private static final Logger logger = LoggerFactory.getLogger(KafkaProducerExample.class);
 
     public static void main(String[] args) throws IOException {
         if (args.length != 3) {
