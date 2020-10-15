@@ -16,7 +16,7 @@ public class ProducerExample {
 
     private static final Logger logger = LoggerFactory.getLogger(ProducerExample.class);
 
-    public static void main(String[] args) throws IOException, InterruptedException {
+    public static void main(String[] args) throws IOException {
         if (args.length != 3) {
             System.out.println("Please provide command line arguments: configPath topic numMessages");
             System.exit(1);
@@ -46,7 +46,12 @@ public class ProducerExample {
                 }
             });
         }
-        Thread.sleep(60000);
+
+        producer.flush();
+
+        logger.info("{} messages were produced to topic {}", numMessages,  topic);
+
+        producer.close();
     }
 
     private static void addAdditionalProperties(Properties props) {
