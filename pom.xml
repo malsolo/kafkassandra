@@ -12,6 +12,7 @@
   <modules>
     <module>kafka-basic</module>
     <module>cassandra-basic</module>
+    <module>kafka-boot</module>
   </modules>
 
 </project>
