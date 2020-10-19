@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 public class CassandraQuickStart {
 
     private static final Logger logger = LoggerFactory.getLogger(CassandraQuickStart.class);
+
     public static final String CONTACT_POINT_1_HOST = "127.0.0.1";
     public static final int CONTACT_POINT_1_PORT = 9042;
     public static final String KEYSPACE_NAME = "demo";
