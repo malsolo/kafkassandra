@@ -1,6 +1,7 @@
 package com.malsolo.kafkassandra.kafka.boot;
 
 import java.util.stream.Stream;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -9,6 +10,7 @@ import org.springframework.context.annotation.Bean;
 
 @SpringBootApplication
 @ConfigurationPropertiesScan
+@Slf4j
 public class KafkaBootApplication {
 
 	public static void main(String[] args) {
@@ -21,6 +23,9 @@ public class KafkaBootApplication {
 			if (kafkaProperties.getProducer().isAutoStart()) {
 				Stream.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
 					.forEach(i -> kafkaBootProducer.sendMessage(i, "Message " + i));
+			}
+			else {
+				log.warn("***** No messages produced because auto start is disabled");
 			}
 		};
 	}

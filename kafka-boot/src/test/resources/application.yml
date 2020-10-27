@@ -1,0 +1,9 @@
+
+kafka:
+  producer:
+    auto-start: false
+    topic: kafka-boot-test-topic
+  consumer:
+    auto-start: true
+    topic: kafka-boot-test-topic
+    group-id: Kafkassandra-group
