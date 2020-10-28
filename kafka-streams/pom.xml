@@ -17,6 +17,7 @@
     <junit.version>5.7.0</junit.version>
     <confluent-ccs.version>6.0.0-ccs</confluent-ccs.version>
     <confluent.version>6.0.0</confluent.version>
+    <assertj.version>3.18.0</assertj.version>
   </properties>
 
   <repositories>
@@ -39,6 +40,13 @@
       <version>${confluent-ccs.version}</version>
     </dependency>
 
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka-streams-test-utils</artifactId>
+      <version>${confluent-ccs.version}</version>
+      <scope>test</scope>
+    </dependency>
+
     <!-- Dependencies below are required/recommended only when using Apache Avro. -->
     <dependency>
       <groupId>io.confluent</groupId>
@@ -54,6 +62,13 @@
       <groupId>org.apache.avro</groupId>
       <artifactId>avro-maven-plugin</artifactId>
       <version>1.8.2</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <version>${assertj.version}</version>
+      <scope>test</scope>
     </dependency>
 
     <dependency>

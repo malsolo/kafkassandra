@@ -31,3 +31,6 @@ See https://docs.confluent.io/current/streams/developer-guide/write-streams.html
 ## Testing Streams Code
 
 See https://docs.confluent.io/current/streams/developer-guide/test-streams.html
+
+See also https://kafka.apache.org/26/documentation/streams/developer-guide/testing.html
+
