@@ -1,0 +1,28 @@
+server:
+  port: 6161
+
+spring:
+  jmx:
+    enabled: false
+  cloud:
+    stream:
+      bindings:
+        process-in-0:
+          destination: cloudkafkastreams-input-topic
+          group: Kafkassandra-group
+        wordCount-in-0:
+          destination: cloudkafkastreams-input-topic
+          group: Kafkassandra-group
+        wordCount-out-0:
+          destination: cloudkafkastreams-words-topic
+      function:
+        definition: process;wordCount
+      kafka:
+        streams:
+          binder:
+            functions:
+              process:
+                applicationId: PROCESS_APP
+              wordCount:
+                applicationId: WORD_COUNT_APP
+

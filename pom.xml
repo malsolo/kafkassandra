@@ -13,6 +13,7 @@
     <module>kafka-basic</module>
     <module>kafka-boot</module>
     <module>kafka-streams</module>
+    <module>kafka-streams-boot</module>
     <module>cassandra-basic</module>
   </modules>
 
