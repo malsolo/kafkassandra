@@ -11,8 +11,9 @@
       
   <modules>
     <module>kafka-basic</module>
-    <module>cassandra-basic</module>
     <module>kafka-boot</module>
+    <module>kafka-streams</module>
+    <module>cassandra-basic</module>
   </modules>
 
 </project>
