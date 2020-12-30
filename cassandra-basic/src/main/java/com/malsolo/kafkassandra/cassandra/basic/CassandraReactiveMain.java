@@ -15,9 +15,13 @@ import java.time.Instant;
 import java.util.Random;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 
 public class CassandraReactiveMain {
+
+    private static final Logger logger = LoggerFactory.getLogger(CassandraReactiveMain.class);
 
     //See https://docs.datastax.com/en/developer/java-driver/4.9/manual/core/reactive/
     public static void main(String[] args) {
@@ -31,9 +35,9 @@ public class CassandraReactiveMain {
 
             //noinspection ReactiveStreamsNullableInLambdaInTransform
             Flux.from(session.executeReactive(s))
-                .doOnNext(System.out::println)
+                .doOnNext(reactiveRow -> logger.info("Reactive row: {}", reactiveRow))
                 .map(reactiveRow -> reactiveRow.getString("release_version"))
-                .doOnNext(System.out::println)
+                .doOnNext(version -> logger.info("VERSION: {}", version))
                 .blockLast();
 
             var stocks = "insert into stocks (symbol, date, value) values (?, ?, ?)";
@@ -51,22 +55,22 @@ public class CassandraReactiveMain {
                     .builder(stocks)
                     .addPositionalValues(pair.getLeft(), now, pair.getRight())
                     .build())
-                .doOnNext(stmt -> System.out.println(stmt.getQuery()))
+                .doOnNext(stmt -> logger.info("INSERT Stock {}", stmt.getQuery()))
                 .flatMap(session::executeReactive)
                 .blockLast()
             ;
 
             var random = new Random();
             Flux.interval(Duration.ofMillis(100))
+                .take(10)
                 .map(tick -> ImmutableTriple.of("ING", Instant.now(),
                     BigDecimal.valueOf(random.nextInt(10) + Math.random())))
                 .map(triple -> SimpleStatement
                     .builder(stocks)
                     .addPositionalValues(triple.getLeft(), triple.getMiddle(), triple.getRight())
                     .build())
-                .doOnNext(stmt -> System.out.println(stmt.getQuery()))
+                .doOnNext(stmt -> logger.info("INSERT ING Stock {}", stmt.getQuery()))
                 .flatMap(session::executeReactive)
-                .take(10)
                 .blockLast()
                 ;
         } catch (DriverException de) {
