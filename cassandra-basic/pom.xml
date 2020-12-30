@@ -15,7 +15,20 @@
     <datastax.driver.version>4.9.0</datastax.driver.version>
     <logback.version>1.2.3</logback.version>
     <junit.version>5.7.0</junit.version>
+    <projectreactor-bom.version>2020.0.2</projectreactor-bom.version>
   </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>io.projectreactor</groupId>
+        <artifactId>reactor-bom</artifactId>
+        <version>${projectreactor-bom.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <dependencies>
     <dependency>
@@ -34,6 +47,17 @@
       <groupId>com.datastax.oss</groupId>
       <artifactId>java-driver-mapper-runtime</artifactId>
       <version>${datastax.driver.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>io.projectreactor</groupId>
+      <artifactId>reactor-core</artifactId>
+
+    </dependency>
+    <dependency>
+      <groupId>io.projectreactor</groupId>
+      <artifactId>reactor-test</artifactId>
+      <scope>test</scope>
     </dependency>
 
     <dependency>
