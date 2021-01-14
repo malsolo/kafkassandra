@@ -1,0 +1,12 @@
+{"namespace": "com.malsolo.kafka.streams.trading.model",
+ "type": "record",
+ "name": "CompanyShares",
+ "fields": [
+     {"name": "id", "type": "string"},
+     {"name": "sector", "type": "string"},
+     {"name": "industry", "type": "string"},
+     {"name": "sharePriceTimestamp", "type": "long", "logicalType": "timestamp-millis"},
+     {"name": "sharePrice", "type": "double"},
+     {"name": "stockTransactionReferenceId", "type": "long"}
+ ]
+}

@@ -1,0 +1,11 @@
+{"namespace": "com.malsolo.kafka.streams.trading.model",
+ "type": "record",
+ "name": "StockTransaction",
+ "fields": [
+     {"name": "id", "type": "long"},
+     {"name": "customerId", "type": "string"},
+     {"name": "companyId", "type": "string"},
+     {"name": "shares", "type": "int"},
+     {"name": "transactionTimestamp", "type": "long", "logicalType": "timestamp-millis"}
+ ]
+}

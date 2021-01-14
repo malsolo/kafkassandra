@@ -1,0 +1,15 @@
+{"namespace": "com.malsolo.kafka.streams.trading.model",
+ "type": "record",
+ "name": "StockTransactionCompleted",
+ "fields": [
+     {"name": "id", "type": "long"},
+     {"name": "customerId", "type": ["null", "string"]},
+     {"name": "companyId", "type": ["null", "string"]},
+     {"name": "sector", "type": ["null", "string"]},
+     {"name": "industry", "type": ["null", "string"]},
+     {"name": "transactionTimestamp", "type": "long", "logicalType": "timestamp-millis"},
+     {"name": "shares", "type": ["null", "int"]},
+     {"name": "sharePrice", "type": ["null", "double"]},
+     {"name": "completed", "type": "boolean"}
+ ]
+}
