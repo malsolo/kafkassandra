@@ -10,6 +10,7 @@
   <name>Kafkassandra</name>
       
   <modules>
+    <module>avro-schemas</module>
     <module>kafka-basic</module>
     <module>kafka-boot</module>
     <module>kafka-streams</module>
