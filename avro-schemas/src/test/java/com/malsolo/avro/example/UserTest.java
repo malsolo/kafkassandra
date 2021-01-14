@@ -10,9 +10,14 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import org.apache.avro.file.DataFileReader;
 import org.apache.avro.file.DataFileWriter;
+import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DatumWriter;
+import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificDatumWriter;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +28,7 @@ public class UserTest {
     Logger logger = LoggerFactory.getLogger(UserTest.class);
 
     @Test
+    @Order(1)
     public void testSerializing() throws IOException {
         logger.info("Test serializing");
         var users = createUsers();
@@ -38,12 +44,35 @@ public class UserTest {
 
         users.stream()
             .map(API.unchecked(user -> appendToDataFileWriter(dataFileWriter, user)))
-            .forEach(System.out::println);
+            .forEach(user -> logger.info("User serialized: {}", user));
 
         dataFileWriter.close();
 
         assertTrue(Files.exists(Paths.get(USERS_AVRO_PATH)));
     }
+
+    @Test
+    @Order(2)
+    public void testDeserializing() throws IOException {
+        logger.info("Test deserializing");
+        var users = createUsers();
+
+        // Deserialize Users from disk
+        DatumReader<User> userDatumReader = new SpecificDatumReader<>(User.class);
+        DataFileReader<User> dataFileReader = new DataFileReader<>(new File(USERS_AVRO_PATH), userDatumReader);
+        User user = null;
+        int i = 0;
+        while (dataFileReader.hasNext()) {
+            // Reuse user object by passing it to next(). This saves us from
+            // allocating and garbage collecting many objects for files with
+            // many items.
+            user = dataFileReader.next(user);
+            Assertions.assertEquals(users.get(i), user);
+            i++;
+            logger.info("User deserialized: {}", user);
+        }
+    }
+
 
     private User appendToDataFileWriter(DataFileWriter<User> dataFileWriter, User user) throws IOException {
         dataFileWriter.append(user);
