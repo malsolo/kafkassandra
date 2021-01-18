@@ -1,11 +1,13 @@
 package com.malsolo.kafkassandra.kafka.streams.purchase;
 
 import static com.malsolo.kafkassandra.kafka.streams.purchase.config.TopicsConfig.AMUSEMENT_TOPIC_SINK;
+import static com.malsolo.kafkassandra.kafka.streams.purchase.config.TopicsConfig.BOOTSTRAP_SERVERS;
 import static com.malsolo.kafkassandra.kafka.streams.purchase.config.TopicsConfig.CUSTOMER_TRANSACTIONS_TOPIC;
 import static com.malsolo.kafkassandra.kafka.streams.purchase.config.TopicsConfig.ELECTRONICS_TOPIC_SINK;
 import static com.malsolo.kafkassandra.kafka.streams.purchase.config.TopicsConfig.EMPLOYEE_ID;
 import static com.malsolo.kafkassandra.kafka.streams.purchase.config.TopicsConfig.PATTERNS_TOPIC_SINK;
 import static com.malsolo.kafkassandra.kafka.streams.purchase.config.TopicsConfig.PURCHASES_TOPIC_SINK;
+import static com.malsolo.kafkassandra.kafka.streams.purchase.config.TopicsConfig.PURCHASE_APPLICATION_ID;
 import static com.malsolo.kafkassandra.kafka.streams.purchase.config.TopicsConfig.REWARDS_TOPIC_SINK;
 import static com.malsolo.kafkassandra.kafka.streams.purchase.config.TopicsConfig.TRANSACTIONS_TOPIC_SOURCE;
 
@@ -16,8 +18,12 @@ import com.malsolo.kafkassandra.kafka.streams.purchase.partitioner.RewardsStream
 import com.malsolo.kafkassandra.kafka.streams.purchase.repository.PurchaseRepositorySysOut;
 import com.malsolo.kafkassandra.kafka.streams.purchase.serde.StreamsSerdes;
 import com.malsolo.kafkassandra.kafka.streams.purchase.transformer.PurchaseRewardTransformer;
+import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
+import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.ForeachAction;
@@ -32,7 +38,39 @@ import org.apache.kafka.streams.state.Stores;
 public class PurchaseTopologyApp {
 
     public static void main(String[] args) {
+        var app = new PurchaseTopologyApp();
 
+        var props = app.createStreamsConfigProperties();
+        var topology = app.createTopology();
+        var streams = new KafkaStreams(topology, props);
+
+        System.out.println(topology.describe());
+
+        var latch = new CountDownLatch(1);
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            streams.close();
+            latch.countDown();
+        }));
+
+        try {
+            streams.start();
+            latch.await();
+        } catch (Throwable e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+
+        System.exit(0);
+    }
+
+    public Properties createStreamsConfigProperties() {
+        var props = new Properties();
+
+        props.put(StreamsConfig.APPLICATION_ID_CONFIG, PURCHASE_APPLICATION_ID);
+        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
+
+        return props;
     }
 
     public Topology createTopology() {
