@@ -26,13 +26,15 @@ public class PurchaseRewardTransformer implements ValueTransformer<Purchase, Rew
     public RewardAccumulator transform(Purchase value) {
         var rewardAccumulator = RewardAccumulator.fromPurchase(value);
 
-        var accumulatedSoFar = this.stateStore.get(rewardAccumulator.getCustomerId());
+        var customerId = rewardAccumulator.getCustomerId();
+
+        var accumulatedSoFar = this.stateStore.get(customerId);
 
         if (accumulatedSoFar != null) {
             rewardAccumulator.addRewardPoints(accumulatedSoFar);
         }
 
-        this.stateStore.put(rewardAccumulator.getCustomerId(), accumulatedSoFar);
+        this.stateStore.put(customerId, accumulatedSoFar);
 
         return rewardAccumulator;
     }

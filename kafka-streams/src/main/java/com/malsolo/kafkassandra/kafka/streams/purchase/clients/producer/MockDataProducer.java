@@ -1,10 +1,12 @@
 package com.malsolo.kafkassandra.kafka.streams.purchase.clients.producer;
 
+import static com.malsolo.kafkassandra.kafka.streams.purchase.clients.datagen.Generator.BOOKS_DPT;
+import static com.malsolo.kafkassandra.kafka.streams.purchase.clients.datagen.Generator.ELECTRONICS_DPT;
+import static com.malsolo.kafkassandra.kafka.streams.purchase.clients.datagen.Generator.generatePurchase;
 import static com.malsolo.kafkassandra.kafka.streams.purchase.config.TopicsConfig.TRANSACTIONS_TOPIC_SOURCE;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.malsolo.kafkassandra.kafka.streams.purchase.clients.datagen.Generator;
 import com.malsolo.kafkassandra.kafka.streams.purchase.model.Purchase;
 import com.malsolo.kafkassandra.kafka.streams.purchase.serde.JsonSerializer;
 import java.util.Properties;
@@ -23,7 +25,7 @@ import org.apache.kafka.common.serialization.StringSerializer;
 public class MockDataProducer {
 
     public static final String BOOTSTRAP_SERVERS = "localhost:9092";
-    public static final int NUMBER_OF_PURCHASES = 1;
+    public static final int NUMBER_OF_PURCHASES = 10;
 
     private static ScheduledExecutorService SCHEDULER = Executors.newScheduledThreadPool(1);
 
@@ -46,25 +48,14 @@ public class MockDataProducer {
         try (var producer = new KafkaProducer<>(properties, stringSerializer, purchaseJsonSerializer)) {
             log.info("About to produce purchases...");
             SCHEDULER.scheduleWithFixedDelay(() -> {
-                log.info("Produce purchases...");
-                var purchase = Generator.generatePurchase();
-                var purchaseJson = generateJson(purchase);
-                var purchaseRecord = new ProducerRecord<String, Purchase>(TRANSACTIONS_TOPIC_SOURCE, null, purchase);
-                log.info("Purchase created {}", purchaseJson);
-
-                producer.send(purchaseRecord, ((metadata, exception) -> {
-                    if (exception == null) {
-                        log.info("Purchase record sent successfully, to topic {}, partition {}, and offset {}",
-                            metadata.topic(), metadata.partition(), metadata.offset());
-                    } else {
-                        log.error("Purchase Sent failed: {}", exception.getMessage());
-                        exception.printStackTrace();
-                    }
-                }));
-
-                log.info("Purchase produced {}.", count.incrementAndGet());
-                latch.countDown();
-            }, 500, 200, TimeUnit.MILLISECONDS);
+                var purchaseRecord = generateAndSendPurchase(producer, count, latch, null, null);
+                if (BOOKS_DPT.equals(purchaseRecord.value().getDepartment())) {
+                    generateAndSendPurchase(producer, count, latch, purchaseRecord.value().getCustomerId(), ELECTRONICS_DPT);
+                }
+                else if (ELECTRONICS_DPT.equals(purchaseRecord.value().getDepartment())) {
+                    generateAndSendPurchase(producer, count, latch, purchaseRecord.value().getCustomerId(), BOOKS_DPT);
+                }
+            }, 500, 100, TimeUnit.MILLISECONDS);
             log.info("Waiting to purchases...");
             latch.await();
             log.info("End Waiting to purchases.");
@@ -80,6 +71,36 @@ public class MockDataProducer {
 
         log.info("MockDataProducer. Done.");
         System.exit(0);
+    }
+
+    public static ProducerRecord<String, Purchase> generateAndSendPurchase(KafkaProducer<String, Purchase> producer,
+        AtomicInteger count, CountDownLatch latch, String customerId, String department) {
+        log.info("Produce purchases...");
+        var purchase = generatePurchase();
+        if (customerId != null) {
+            purchase.setCustomerId(customerId);
+        }
+        if (department != null) {
+            purchase.setDepartment(department);
+        }
+        var purchaseJson = generateJson(purchase);
+        var purchaseRecord = new ProducerRecord<String, Purchase>(TRANSACTIONS_TOPIC_SOURCE, null, purchase);
+        log.info("Purchase created {}", purchaseJson);
+
+        producer.send(purchaseRecord, ((metadata, exception) -> {
+            if (exception == null) {
+                log.info("Purchase record sent successfully, to topic {}, partition {}, and offset {}",
+                    metadata.topic(), metadata.partition(), metadata.offset());
+            } else {
+                log.error("Purchase Sent failed: {}", exception.getMessage());
+                exception.printStackTrace();
+            }
+        }));
+
+        log.info("Purchase produced {}.", count.incrementAndGet());
+        latch.countDown();
+
+        return purchaseRecord;
     }
 
     private static String generateJson(Purchase purchase) {
