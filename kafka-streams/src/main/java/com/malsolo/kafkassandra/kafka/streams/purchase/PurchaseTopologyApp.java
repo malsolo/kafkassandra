@@ -1,9 +1,8 @@
 package com.malsolo.kafkassandra.kafka.streams.purchase;
 
-import static com.malsolo.kafkassandra.kafka.streams.purchase.config.TopicsConfig.AMUSEMENT_TOPIC_SINK;
 import static com.malsolo.kafkassandra.kafka.streams.purchase.config.TopicsConfig.BOOTSTRAP_SERVERS;
+import static com.malsolo.kafkassandra.kafka.streams.purchase.config.TopicsConfig.CORRELATED_PURCHASES_TOPIC_SINK;
 import static com.malsolo.kafkassandra.kafka.streams.purchase.config.TopicsConfig.CUSTOMER_TRANSACTIONS_TOPIC;
-import static com.malsolo.kafkassandra.kafka.streams.purchase.config.TopicsConfig.ELECTRONICS_TOPIC_SINK;
 import static com.malsolo.kafkassandra.kafka.streams.purchase.config.TopicsConfig.EMPLOYEE_ID;
 import static com.malsolo.kafkassandra.kafka.streams.purchase.config.TopicsConfig.PATTERNS_TOPIC_SINK;
 import static com.malsolo.kafkassandra.kafka.streams.purchase.config.TopicsConfig.PURCHASES_TOPIC_SINK;
@@ -21,8 +20,6 @@ import com.malsolo.kafkassandra.kafka.streams.purchase.repository.PurchaseReposi
 import com.malsolo.kafkassandra.kafka.streams.purchase.serde.StreamsSerdes;
 import com.malsolo.kafkassandra.kafka.streams.purchase.transformer.PurchaseRewardTransformer;
 import java.time.Duration;
-import java.time.ZoneId;
-import java.util.Date;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import org.apache.kafka.common.serialization.Serdes;
@@ -39,8 +36,6 @@ import org.apache.kafka.streams.kstream.KeyValueMapper;
 import org.apache.kafka.streams.kstream.Predicate;
 import org.apache.kafka.streams.kstream.Printed;
 import org.apache.kafka.streams.kstream.Produced;
-import org.apache.kafka.streams.kstream.Repartitioned;
-import org.apache.kafka.streams.kstream.StreamJoined;
 import org.apache.kafka.streams.state.Stores;
 
 public class PurchaseTopologyApp {
@@ -172,6 +167,8 @@ public class PurchaseTopologyApp {
             Joined.with(stringSerde, purchaseSerde, purchaseSerde));
 
         joinedStream.print(Printed.<String, CorrelatedPurchase>toSysOut().withLabel("joinedStream"));
+
+        joinedStream.to(CORRELATED_PURCHASES_TOPIC_SINK, Produced.with(stringSerde, StreamsSerdes.CorrelatedPurchaseSerde()));
 
         // ACTION -> Repository
         var purchaseRepository = new PurchaseRepositorySysOut();

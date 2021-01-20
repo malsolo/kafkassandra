@@ -3,6 +3,7 @@ package com.malsolo.kafkassandra.kafka.streams.purchase.serde;
 
 import static com.malsolo.kafkassandra.kafka.streams.purchase.serde.JsonDeserializer.CONFIG_KEY_JSON_CLASS;
 
+import com.malsolo.kafkassandra.kafka.streams.purchase.model.CorrelatedPurchase;
 import com.malsolo.kafkassandra.kafka.streams.purchase.model.Purchase;
 import com.malsolo.kafkassandra.kafka.streams.purchase.model.PurchasePattern;
 import com.malsolo.kafkassandra.kafka.streams.purchase.model.RewardAccumulator;
@@ -39,5 +40,14 @@ public class StreamsSerdes {
 
         return Serdes.serdeFrom(rewardAccumulatorSerializer, rewardAccumulatorDeserializer);
     }
+
+    public static Serde<CorrelatedPurchase> CorrelatedPurchaseSerde() {
+        var correlatedPurchaseJsonSerializer = new JsonSerializer<CorrelatedPurchase>();
+        var correlatedPurchaseJsonDeserializer = new JsonDeserializer<CorrelatedPurchase>();
+        correlatedPurchaseJsonDeserializer.configure(Map.of(CONFIG_KEY_JSON_CLASS, CorrelatedPurchase.class), false);
+
+        return Serdes.serdeFrom(correlatedPurchaseJsonSerializer, correlatedPurchaseJsonDeserializer);
+    }
+
 
 }

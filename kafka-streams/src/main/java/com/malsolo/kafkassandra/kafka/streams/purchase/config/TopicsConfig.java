@@ -13,5 +13,7 @@ public class TopicsConfig {
 
     public static final String AMUSEMENT_TOPIC_SINK = "ksia-amusement";
     public static final String ELECTRONICS_TOPIC_SINK = "ksia-electronics";
+    public static final String CORRELATED_PURCHASES_TOPIC_SINK = "ksia-correlated-purchases";
+
     public static final String EMPLOYEE_ID = "000000";
 }

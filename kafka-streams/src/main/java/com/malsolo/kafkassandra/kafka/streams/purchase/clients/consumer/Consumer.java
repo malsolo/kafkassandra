@@ -1,12 +1,14 @@
 package com.malsolo.kafkassandra.kafka.streams.purchase.clients.consumer;
 
 import static com.malsolo.kafkassandra.kafka.streams.purchase.config.TopicsConfig.AMUSEMENT_TOPIC_SINK;
+import static com.malsolo.kafkassandra.kafka.streams.purchase.config.TopicsConfig.CORRELATED_PURCHASES_TOPIC_SINK;
 import static com.malsolo.kafkassandra.kafka.streams.purchase.config.TopicsConfig.ELECTRONICS_TOPIC_SINK;
 import static com.malsolo.kafkassandra.kafka.streams.purchase.config.TopicsConfig.PATTERNS_TOPIC_SINK;
 import static com.malsolo.kafkassandra.kafka.streams.purchase.config.TopicsConfig.PURCHASES_TOPIC_SINK;
 import static com.malsolo.kafkassandra.kafka.streams.purchase.config.TopicsConfig.REWARDS_TOPIC_SINK;
 import static com.malsolo.kafkassandra.kafka.streams.purchase.serde.JsonDeserializer.CONFIG_KEY_JSON_CLASS;
 
+import com.malsolo.kafkassandra.kafka.streams.purchase.model.CorrelatedPurchase;
 import com.malsolo.kafkassandra.kafka.streams.purchase.model.Purchase;
 import com.malsolo.kafkassandra.kafka.streams.purchase.model.PurchasePattern;
 import com.malsolo.kafkassandra.kafka.streams.purchase.model.RewardAccumulator;
@@ -37,10 +39,12 @@ public class Consumer {
     public static final int REWARDS_TOPIC_SINK_PARTITIONS = 3;
     public static final int AMUSEMENT_TOPIC_SINK_PARTITIONS = 1;
     public static final int ELECTRONICS_TOPIC_SINK_PARTITIONS = 1;
+    public static final int CORRELATED_PURCHASES_TOPIC_SINK_PARTITIONS = 1;
 
     public static void main(String[] args) throws InterruptedException {
         var props = new Properties();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
+        props.put(ConsumerConfig.CLIENT_ID_CONFIG, CLIENT_ID);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, GROUP_ID);
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, AUTO_OFFSET_RESET);
 
@@ -51,7 +55,8 @@ public class Consumer {
                 PATTERNS_TOPIC_SINK_PARTITIONS +
                 REWARDS_TOPIC_SINK_PARTITIONS +
                 AMUSEMENT_TOPIC_SINK_PARTITIONS +
-                ELECTRONICS_TOPIC_SINK_PARTITIONS
+                ELECTRONICS_TOPIC_SINK_PARTITIONS +
+                CORRELATED_PURCHASES_TOPIC_SINK_PARTITIONS
         );
 
         var latch = new CountDownLatch(
@@ -68,6 +73,7 @@ public class Consumer {
         var rewardAccumulatorRunner = new Runner<>(new RewardAccumulator(), "REWARDS");
         var amusementRunner = new Runner<>(new Purchase(), "AMUSEMENTS");
         var electronicsRunner = new Runner<>(new Purchase(), "ELECTRONICS");
+        var correlatedPurchasesRunner = new Runner<>(new CorrelatedPurchase(), "CORRELATED_PURCHASES");
 
         executorService.submit(purchaseRunner.consumer(props, PURCHASES_TOPIC_SINK, "purchaseConsumer1"));
 
@@ -80,6 +86,7 @@ public class Consumer {
 
         executorService.submit(amusementRunner.consumer(props, AMUSEMENT_TOPIC_SINK, "amusementConsumer1"));
         executorService.submit(electronicsRunner.consumer(props, ELECTRONICS_TOPIC_SINK, "electronicsConsumer1"));
+        executorService.submit(correlatedPurchasesRunner.consumer(props, CORRELATED_PURCHASES_TOPIC_SINK, "correlatedPurchasesConsumer1"));
 
         latch.await();
 
@@ -87,6 +94,9 @@ public class Consumer {
     }
 
     private static class Runner<T> {
+
+        private static final String GROUP_ID_SUFFIX = "_GROUP";
+        private static final String GROUP_ID_PREFFIX = "KSIA_";
 
         private final T t;
         private final String name;
@@ -107,8 +117,9 @@ public class Consumer {
                 var properties = new Properties();
                 properties.putAll(props);
                 properties.put(ConsumerConfig.CLIENT_ID_CONFIG, clientId);
+                properties.put(ConsumerConfig.GROUP_ID_CONFIG, GROUP_ID_PREFFIX + this.name + GROUP_ID_SUFFIX);
 
-                try (var consumer = new KafkaConsumer<>(props, stringDeserializer, jsonDeserializer)) {
+                try (var consumer = new KafkaConsumer<>(properties, stringDeserializer, jsonDeserializer)) {
 
                     consumer.subscribe(Collections.singletonList(topic));
 
