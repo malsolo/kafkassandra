@@ -30,12 +30,13 @@ import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.ForeachAction;
 import org.apache.kafka.streams.kstream.JoinWindows;
-import org.apache.kafka.streams.kstream.Joined;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KeyValueMapper;
 import org.apache.kafka.streams.kstream.Predicate;
 import org.apache.kafka.streams.kstream.Printed;
 import org.apache.kafka.streams.kstream.Produced;
+import org.apache.kafka.streams.kstream.Repartitioned;
+import org.apache.kafka.streams.kstream.StreamJoined;
 import org.apache.kafka.streams.state.Stores;
 
 public class PurchaseTopologyApp {
@@ -117,15 +118,11 @@ public class PurchaseTopologyApp {
         //New feature: state store for calculating the rewards. See page 95.
         var rewardsStreamPartitioner = new RewardsStreamPartitioner();
 
-        var transByCustomerStream = maskedPurchaseKStream.through(CUSTOMER_TRANSACTIONS_TOPIC, Produced.with(stringSerde, purchaseSerde, rewardsStreamPartitioner));
-            /*
-            maskedPurchaseKStream.repartition(Repartitioned.streamPartitioner(rewardsStreamPartitioner)
+        var transByCustomerStream = maskedPurchaseKStream.repartition(Repartitioned.streamPartitioner(rewardsStreamPartitioner)
                 .withKeySerde(stringSerde)
                 .withValueSerde(purchaseSerde)
                 .withName(CUSTOMER_TRANSACTIONS_TOPIC)
             );
-
-             */
 
         //Adding a state store
         var rewardsStateStoreName = "rewardsPointsStore";
@@ -147,8 +144,8 @@ public class PurchaseTopologyApp {
             .selectKey((k, v) -> v.getCustomerId())
             .branch(this.isAmusement(), this.isElectronics());
 
-        int amusementIndex = 0;
-        int electronicsIndex = 1;
+        var amusementIndex = 0;
+        var electronicsIndex = 1;
 
         var amusementStream = kstreamByDept[amusementIndex];
         amusementStream.print(Printed.<String, Purchase>toSysOut().withLabel("amusementStream"));
@@ -164,7 +161,7 @@ public class PurchaseTopologyApp {
         var joinedStream = amusementStream.join(electronicsStream,
             purchaseJoiner,
             twentyMinuteWindow,
-            Joined.with(stringSerde, purchaseSerde, purchaseSerde));
+            StreamJoined.with(stringSerde, purchaseSerde, purchaseSerde));
 
         joinedStream.print(Printed.<String, CorrelatedPurchase>toSysOut().withLabel("joinedStream"));
 
