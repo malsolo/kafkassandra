@@ -13,17 +13,22 @@ import com.malsolo.kafkassandra.kafka.streams.purchase.model.Purchase;
 import com.malsolo.kafkassandra.kafka.streams.purchase.model.PurchasePattern;
 import com.malsolo.kafkassandra.kafka.streams.purchase.model.RewardAccumulator;
 import com.malsolo.kafkassandra.kafka.streams.purchase.serde.JsonDeserializer;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.StringDeserializer;
 
 @Slf4j
@@ -47,6 +52,7 @@ public class Consumer {
         props.put(ConsumerConfig.CLIENT_ID_CONFIG, CLIENT_ID);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, GROUP_ID);
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, AUTO_OFFSET_RESET);
+        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
 
         log.info("Topology consumer");
 
@@ -119,7 +125,8 @@ public class Consumer {
                 properties.put(ConsumerConfig.CLIENT_ID_CONFIG, clientId);
                 properties.put(ConsumerConfig.GROUP_ID_CONFIG, GROUP_ID_PREFFIX + this.name + GROUP_ID_SUFFIX);
 
-                try (var consumer = new KafkaConsumer<>(properties, stringDeserializer, jsonDeserializer)) {
+                var consumer = new KafkaConsumer<>(properties, stringDeserializer, jsonDeserializer);
+                try {
 
                     consumer.subscribe(Collections.singletonList(topic));
 
@@ -134,9 +141,47 @@ public class Consumer {
 
                             log.info("{} Key: {}, Value: {}", label, record.key(), record.value());
                         }
+                        commitCurrentOffset(consumer);
                     }
+                } catch (SerializationException se) {
+                    log.error(se.getMessage());
+                    var error = obtainErrorMessage(se);
+                    publishErrorToDLQ(error);
+                    System.err.println(error);
+                    //TODO: try to seek to skip the poison pill
+                    //consumer.seek(new TopicPartition("", 0), 1);
+                }
+                finally {
+                    consumer.close();
                 }
             };
+        }
+
+        private void commitCurrentOffset(KafkaConsumer<String, T> consumer) {
+            consumer.commitAsync((offsets, exception) -> {
+                if (exception != null) {
+                    log.error("Error committing current offset for {}: {}", name, exception.getMessage());
+                } else {
+                    log.trace("Commit current offset for {}: {}", name,
+                        offsets.keySet().stream()
+                            .map(tp ->
+                                String.format("\n\t topic %s partition %d offset %d metadata %s",
+                                    tp.topic(), tp.partition(),
+                                    offsets.get(tp).offset(), offsets.get(tp).metadata()))
+                            .collect(Collectors.joining(",\n"))
+                    );
+                }
+            });
+        }
+
+        private void publishErrorToDLQ(String error) {
+            System.err.printf("Publish error %s to DLQ\n", error);
+        }
+
+        private String obtainErrorMessage(Exception e) {
+            var sw = new StringWriter();
+            e.printStackTrace(new PrintWriter(sw));
+            return sw.toString();
         }
     }
 }
