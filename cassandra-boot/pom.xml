@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.malsolo.kafkassandra</groupId>
 	<artifactId>cassandra-boot</artifactId>
-	<version>1.0.0</version>
+	<version>1.1.0-SNAPSHOT</version>
 	<name>Kafkassandra: cassandra boot</name>
 	<description>Cassandra with Spring Data Cassandra Reactive</description>
 
