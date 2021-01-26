@@ -71,3 +71,23 @@ cqlsh> show version
 [cqlsh 5.0.1 | Cassandra 3.11.5 | CQL spec 3.4.4 | Native protocol v4]
 ```
 
+# Test data
+
+```
+Create the keyspace and table
+
+cqlsh> DESC keyspaces;
+
+system_traces  system_schema  system_auth  system  system_distributed
+
+cqlsh> CREATE KEYSPACE IF NOT EXISTS demo WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'};
+
+cqlsh>
+ CREATE TABLE demo.stocks (
+    symbol text,
+    date timestamp,
+    value decimal,
+    PRIMARY KEY (symbol, date)
+ ) WITH CLUSTERING ORDER BY (date DESC);
+
+```
